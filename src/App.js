@@ -1,21 +1,20 @@
 import "./App.css";
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import * as fabric from 'fabric'; // v6
 import DownloadJSON from './DownloadJSON';
 
 class LabeledRect extends fabric.Rect {
   constructor(options) {
-    options = options || {};
     super(options);
-    this.label = options.label;
+    this.options = options || {};
+    this.label = this.options.label;
 
   }
-  // toObject(properties) {
-  //   let ret = super.toObject(properties);
-  //   ret['label'] = this.label;
-  //   return ret;
-  // }
 
+  setLabel(label) {
+    this.label = label;
+    this.options.label = label;
+  }
   _render(ctx) {
     super._render(ctx);
     ctx.font = '15px Helvetica';
@@ -29,10 +28,12 @@ export const App = () => {
   const [selectedObject, setSelectedObject] = useState('');
   const [snapshotJSON, setSnapshotJSON] = useState('');
   const [loadedJSON, setLoadedJSON] = useState('');
+  const labelInputRef = useRef();
+  const occupiedInputRef = useRef();
 
   useEffect(() => {
     const options = { 
-      width: 500,
+      width: 1000,
       height: 500,
       backgroundColor: 'gray'
       };
@@ -80,31 +81,6 @@ export const App = () => {
     parentCanvas.add(shape);
     parentCanvas.renderAll();
   }
-
-  // const addGroup = parentCanvas => {
-  //   const circle = new fabric.Circle({
-  //     radius: 100,
-  //     fill: '#eef',
-  //     scaleY: 0.5,
-  //     originX: 'center',
-  //     originY: 'center'
-  //   });
-    
-  //   const text = new fabric.Textbox('hello world', {
-  //     fontSize: 30,
-  //     originX: 'center',
-  //     originY: 'center'
-  //   });
-    
-  //   const group = new fabric.Group([ circle, text ], {
-  //     left: 150,
-  //     top: 100,
-  //     angle: -10
-  //   });
-    
-  //   parentCanvas.add(group);
-  //   parentCanvas.renderAll();
-  // }
 
   const addText = parentCanvas => {
     const text = new fabric.Textbox('Table', {
@@ -172,6 +148,29 @@ export const App = () => {
       );
   }
 
+  const handleSubmit = (event) => {
+    let opt = selectedObject.options;
+    if (labelInputRef.current.value) {
+      opt.label = labelInputRef.current.value;
+    }
+    if (occupiedInputRef.current.value == 'y') {
+      opt.fill = 'green';
+    }
+    if (occupiedInputRef.current.value == 'n') {
+      opt.fill = 'white';
+    }
+    opt.left = selectedObject.left;
+    opt.top = selectedObject.top;
+
+    let obj = new LabeledRect(opt);
+    canvas.remove(selectedObject);
+    canvas.add(obj);
+    setSelectedObject(obj);
+    canvas.setActiveObject(obj);
+    canvas.renderAll();
+    event.preventDefault();
+  };
+
   return(
     <div className='Canvas'>
       <h1>Restaurant Layout</h1>
@@ -180,13 +179,29 @@ export const App = () => {
         <button onClick={() => addDiamond(canvas)}>Diamond</button>
         <button onClick={() => addText(canvas)}>Label Table</button>
         <button onClick={() => clearCanvas(canvas)}>Clear Canvas</button>
-        {/* <button onClick={() => addGroup(canvas)}>Group</button> */}
         <button onClick={() => deleteSelection(canvas, selectedObject)}>Delete Selection</button>
         <button onClick={() => takeSnapshotJSON(canvas, selectedObject)}>Snapshot JSON</button>
         <DownloadJSON data={snapshotJSON} fileName="canvasJSON" />
         <input type="file" onChange={handleChange} />
         <button onClick={() => restoreFromLoadedFile(canvas)}>Restore From Loaded File</button>
 
+      </div>
+
+      <div>
+        <form onSubmit={handleSubmit} style={{ margin: '20px' }}>
+          <h2>Table Properties</h2>
+          <label style={{ marginRight: '10px' }}>
+            Label:
+            <input type="text" ref={labelInputRef} style={{ marginLeft: '5px' }} />
+          </label>
+          <label style={{ marginRight: '10px' }}>
+            Occupied (y/n):
+            <input type="text" ref={occupiedInputRef} style={{ marginLeft: '5px' }} />
+          </label>
+          <button type="submit" style={{ display: 'block', marginTop: '10px' }}>
+            Update
+          </button>
+        </form>
       </div>
 
       <div>
