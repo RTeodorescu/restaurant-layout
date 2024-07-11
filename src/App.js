@@ -95,11 +95,15 @@ export const App = () => {
   const clearCanvas = parentCanvas => {
     parentCanvas.remove(...canvas.getObjects());
     setSelectedObject('');
+    labelInputRef.current.value = '';
+    occupiedInputRef.current.value = '';
   }
 
   const handleMouseDown = event => {
     if (event.target) {
       setSelectedObject(event.target);
+      labelInputRef.current.value = event.target.options.label;
+      occupiedInputRef.current.value = event.target.options.fill === 'green' ? 'y' : 'n';
       console.log(event.target);
     } else {
       setSelectedObject('');
@@ -153,10 +157,10 @@ export const App = () => {
     if (labelInputRef.current.value) {
       opt.label = labelInputRef.current.value;
     }
-    if (occupiedInputRef.current.value == 'y') {
+    if (occupiedInputRef.current.value === 'y') {
       opt.fill = 'green';
     }
-    if (occupiedInputRef.current.value == 'n') {
+    if (occupiedInputRef.current.value === 'n') {
       opt.fill = 'white';
     }
     opt.left = selectedObject.left;
